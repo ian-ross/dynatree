@@ -108,11 +108,6 @@ function logMsg(msg) {
 }
 
 
-// Forward declaration
-var getDynaTreePersistData = null;
-
-
-
 /*************************************************************************
  *  Constants
  */
@@ -849,10 +844,6 @@ DynaTreeNode.prototype = {
         this.makeVisible();
       }
       this.tree.activeNode = this;
-      if( opts.persist ){
-        $.cookie(opts.cookieId+"-active", this.data.key, opts.cookie);
-      }
-      this.tree.persistence.activeKey = this.data.key;
       $(this.span).addClass(opts.classNames.active);
       if ( fireEvents && opts.onActivate ){
         opts.onActivate.call(this.tree, this);
@@ -865,14 +856,6 @@ DynaTreeNode.prototype = {
           return; // Callback returned false
         }
         $(this.span).removeClass(opts.classNames.active);
-        if( opts.persist ) {
-          // Note: we don't pass null, but ''. So the cookie is not
-          // deleted.  If we pass null, we also have to pass a COPY of
-          // opts, because $cookie will override opts.expires (issue
-          // 84)
-          $.cookie(opts.cookieId+"-active", "", opts.cookie);
-        }
-        this.tree.persistence.activeKey = null;
         this.tree.activeNode = null;
         if ( fireEvents && opts.onDeactivate ){
           opts.onDeactivate.call(this.tree, this);
@@ -1070,9 +1053,6 @@ DynaTreeNode.prototype = {
 //        this.tree._changeNodeList("select", this, sel);
 
     if( sel ) {
-      if( opts.persist ){
-        this.tree.persistence.addSelect(this.data.key);
-      }
       $(this.span).addClass(opts.classNames.selected);
 
       if( deep && opts.selectMode === 3 ){
@@ -1082,9 +1062,6 @@ DynaTreeNode.prototype = {
         opts.onSelect.call(this.tree, true, this);
       }
     } else {
-      if( opts.persist ){
-        this.tree.persistence.clearSelect(this.data.key);
-      }
       $(this.span).removeClass(opts.classNames.selected);
 
       if( deep && opts.selectMode === 3 ){
@@ -1156,14 +1133,6 @@ DynaTreeNode.prototype = {
     }
     this.bExpanded = bExpand;
 
-    // Persist expand state
-    if( opts.persist ) {
-      if( bExpand ){
-        this.tree.persistence.addExpand(this.data.key);
-      }else{
-        this.tree.persistence.clearExpand(this.data.key);
-      }
-    }
     // Do not apply animations in init phase, or before lazy-loading
     var allowEffects = !(this.data.isLazy && this.childList === null)
       && !this._isLoading
@@ -1405,9 +1374,6 @@ DynaTreeNode.prototype = {
         $(this.tree.tnFocused.span).removeClass(opts.classNames.focused);
       }
       this.tree.tnFocused = null;
-      if( opts.persist ){
-        $.cookie(opts.cookieId+"-focus", "", opts.cookie);
-      }
     } else if ( event.type=="focus" || event.type=="focusin") {
       // Fix: sometimes the blur event is not generated
       if( this.tree.tnFocused && this.tree.tnFocused !== this ) {
@@ -1420,9 +1386,6 @@ DynaTreeNode.prototype = {
         opts.onFocus.call(this.tree, this);
       }
       $(this.tree.tnFocused.span).addClass(opts.classNames.focused);
-      if( opts.persist ){
-        $.cookie(opts.cookieId+"-focus", this.data.key, opts.cookie);
-      }
     }
     // TODO: return anything?
 //    return false;
@@ -1484,14 +1447,6 @@ DynaTreeNode.prototype = {
     if( tn === this.tree.activeNode ){
       tn.deactivate();
     }
-    if( this.tree.options.persist ) {
-      if( tn.bSelected ){
-        this.tree.persistence.clearSelect(tn.data.key);
-      }
-      if ( tn.bExpanded ){
-        this.tree.persistence.clearExpand(tn.data.key);
-      }
-    }
     tn.removeChildren(true);
     if(this.ul){
 //      $("li", $(this.ul)).remove(); // issue 399
@@ -1506,7 +1461,7 @@ DynaTreeNode.prototype = {
     }
   },
 
-  removeChildren: function(isRecursiveCall, retainPersistence) {
+  removeChildren: function(isRecursiveCall) {
     // Remove all child nodes (more efficiently than recursive remove())
     this.tree.logDebug("%s.removeChildren(%o)", this, isRecursiveCall);
     var tree = this.tree;
@@ -1514,18 +1469,10 @@ DynaTreeNode.prototype = {
     if( ac ) {
       for(var i=0, l=ac.length; i<l; i++) {
         var tn = ac[i];
-        if ( tn === tree.activeNode && !retainPersistence ){
+        if ( tn === tree.activeNode ){
           tn.deactivate();
         }
-        if( this.tree.options.persist && !retainPersistence ) {
-          if( tn.bSelected ){
-            this.tree.persistence.clearSelect(tn.data.key);
-          }
-          if ( tn.bExpanded ){
-            this.tree.persistence.clearExpand(tn.data.key);
-          }
-        }
-        tn.removeChildren(true, retainPersistence);
+        tn.removeChildren(true);
         if(this.ul){
 //          this.ul.removeChild(tn.li);
           $("li", $(this.ul)).remove(); // issue 231
@@ -1674,8 +1621,7 @@ DynaTreeNode.prototype = {
      *
      */
     var tree = this.tree,
-      opts = tree.options,
-      pers = tree.persistence;
+      opts = tree.options;
 
 //    tree.logDebug("%s._addChildNode(%o)", this, dtnode);
 
@@ -1703,64 +1649,6 @@ DynaTreeNode.prototype = {
     } else {
       // Append node
       this.childList.push(dtnode);
-    }
-
-    // --- Handle persistence
-    // Initial status is read from cookies, if persistence is active and
-    // cookies are already present.
-    // Otherwise the status is read from the data attributes and then persisted.
-    var isInitializing = tree.isInitializing();
-    if( opts.persist && pers.cookiesFound && isInitializing ) {
-      // Init status from cookies
-      // tree.logDebug("init from cookie, pa=%o, dk=%o",
-      //               pers.activeKey, dtnode.data.key);
-      if( pers.activeKey === dtnode.data.key ){
-        tree.activeNode = dtnode;
-      }
-      if( pers.focusedKey === dtnode.data.key ){
-        tree.focusNode = dtnode;
-      }
-      dtnode.bExpanded =
-        ($.inArray(dtnode.data.key, pers.expandedKeyList) >= 0);
-      dtnode.bSelected =
-        ($.inArray(dtnode.data.key, pers.selectedKeyList) >= 0);
-      // tree.logDebug("    key=%o, bSelected=%o", dtnode.data.key,
-      //               dtnode.bSelected);
-    } else {
-      // Init status from data (Note: we write the cookies after the init phase)
-//      tree.logDebug("init from data");
-      if( dtnode.data.activate ) {
-        tree.activeNode = dtnode;
-        if( opts.persist ){
-          pers.activeKey = dtnode.data.key;
-        }
-      }
-      if( dtnode.data.focus ) {
-        tree.focusNode = dtnode;
-        if( opts.persist ){
-          pers.focusedKey = dtnode.data.key;
-        }
-      }
-      dtnode.bExpanded =
-        ( dtnode.data.expand === true ); // Collapsed by default
-      if( dtnode.bExpanded && opts.persist ){
-        pers.addExpand(dtnode.data.key);
-      }
-      dtnode.bSelected =
-        ( dtnode.data.select === true ); // Deselected by default
-/*
-      Doesn't work, cause pers.selectedKeyList may be null
-      if( dtnode.bSelected && opts.selectMode==1
-        && pers.selectedKeyList && pers.selectedKeyList.length>0 ) {
-        tree.logWarning("Ignored multi-selection in single-mode for %o",
-        dtnode);
-        // Fixing bad input data (multi selection for mode:1)
-        dtnode.bSelected = false;
-      }
-*/
-      if( dtnode.bSelected && opts.persist ){
-        pers.addSelect(dtnode.data.key);
-      }
     }
 
     // Always expand, if it's below minExpandLevel
@@ -2027,7 +1915,6 @@ DynaTreeNode.prototype = {
 /*
     var tree = this.tree;
     var opts = tree.options;
-    var pers = tree.persistence;
 
 
     // Always expand, if it's below minExpandLevel
@@ -2071,16 +1958,6 @@ DynaTreeNode.prototype = {
  */
 
 var DynaTreeStatus = Class.create();
-
-
-DynaTreeStatus._getTreePersistData = function(cookieId, cookieOpts) {
-  // Static member: Return persistence information from cookies
-  var ts = new DynaTreeStatus(cookieId, cookieOpts);
-  ts.read();
-  return ts.toDict();
-};
-// Make available in global scope
-getDynaTreePersistData = DynaTreeStatus._getTreePersistData; // TODO: deprecated
 
 
 DynaTreeStatus.prototype = {
@@ -2178,9 +2055,6 @@ DynaTreeStatus.prototype = {
       $.cookie(this.cookieId + "-select",
                this.selectedKeyList.join(","), this.cookieOpts);
     }
-  },
-  isReloading: function() {
-    return this.cookiesFound === true;
   },
   toDict: function() {
     return {
@@ -2288,15 +2162,6 @@ DynaTree.prototype = {
       });
     }
 
-    this.persistence = new DynaTreeStatus(opts.cookieId, opts.cookie);
-    if( opts.persist ) {
-      if( !$.cookie ){
-        _log("warn", "Please include jquery.cookie.js to use persistence.");
-      }
-      this.persistence.read();
-    }
-    this.logDebug("DynaTree.persistence: %o", this.persistence.toDict());
-
     // Cached tag strings
     this.cache = {
       tagEmpty: "<span class='" + opts.classNames.empty + "'></span>",
@@ -2323,7 +2188,6 @@ DynaTree.prototype = {
     this.divTree.appendChild(this.tnRoot.ul);
 
     var root = this.tnRoot,
-      isReloading = ( opts.persist && this.persistence.isReloading() ),
       isLazy = false,
       prevFlag = this.enableUpdate(false);
 
@@ -2368,11 +2232,6 @@ DynaTree.prototype = {
     this.logDebug("Dynatree._load(): postInit...");
     this.phase = "postInit";
 
-    // In persist mode, make sure that cookies are written, even if
-    // they are empty
-    if( opts.persist ) {
-      this.persistence.write();
-    }
     // Set focus, if possible (this will also fire an event and write a cookie)
     if( this.focusNode && this.focusNode.isVisible() ) {
       this.logDebug("Focus on init: %o", this.focusNode);
@@ -2380,7 +2239,7 @@ DynaTree.prototype = {
     }
     if( !isLazy ) {
       if( opts.onPostInit ) {
-        opts.onPostInit.call(this, isReloading, false);
+        opts.onPostInit.call(this, false, false);
       }
       if( callback ){
         callback.call(this, "ok");
@@ -2395,23 +2254,7 @@ DynaTree.prototype = {
     if( ! opts.initAjax || ! opts.initAjax.url ){
       throw "tree.reload() requires 'initAjax' mode.";
     }
-    var pers = this.persistence;
     var ajaxOpts = $.extend({}, opts.initAjax);
-    // Append cookie info to the request
-    // this.logDebug("reloadAjax: key=%o, an.key:%o", pers.activeKey,
-    //               this.activeNode?this.activeNode.data.key:"?");
-    if( ajaxOpts.addActiveKey ){
-      ajaxOpts.data.activeKey = pers.activeKey;
-    }
-    if( ajaxOpts.addFocusedKey ){
-      ajaxOpts.data.focusedKey = pers.focusedKey;
-    }
-    if( ajaxOpts.addExpandedKeyList ){
-      ajaxOpts.data.expandedKeyList = pers.expandedKeyList.join(",");
-    }
-    if( ajaxOpts.addSelectedKeyList ){
-      ajaxOpts.data.selectedKeyList = pers.selectedKeyList.join(",");
-    }
     // Set up onPostInit callback to be called when Ajax returns
     if( ajaxOpts.success ){
       this.logWarning
@@ -2421,13 +2264,12 @@ DynaTree.prototype = {
       this.logWarning
         ("initAjax: error callback is ignored; use onPostInit instead.");
     }
-    var isReloading = pers.isReloading();
     ajaxOpts.success = function(dtnode, data, textStatus) {
       if(opts.selectMode == 3){
         dtnode.tree.tnRoot._updatePartSelectionState();
       }
       if(opts.onPostInit){
-        opts.onPostInit.call(dtnode.tree, isReloading, false);
+        opts.onPostInit.call(dtnode.tree, false, false);
       }
       if(callback){
         callback.call(dtnode.tree, "ok");
@@ -2435,7 +2277,7 @@ DynaTree.prototype = {
     };
     ajaxOpts.error = function(dtnode, XMLHttpRequest, textStatus, errorThrown) {
       if(opts.onPostInit){
-        opts.onPostInit.call(dtnode.tree, isReloading, true,
+        opts.onPostInit.call(dtnode.tree, false, true,
                              XMLHttpRequest, textStatus, errorThrown);
       }
       if(callback){
@@ -2469,10 +2311,6 @@ DynaTree.prototype = {
     return arr;
   },
 
-  getPersistData: function() {
-    return this.persistence.toDict();
-  },
-
   logDebug: function(msg) {
     if( this.options.debugLevel >= 2 ) {
       Array.prototype.unshift.apply(arguments, ["debug"]);
@@ -2494,10 +2332,6 @@ DynaTree.prototype = {
 
   isInitializing: function() {
     return ( this.phase=="init" || this.phase=="postInit" );
-  },
-  isReloading: function() {
-    return ( this.phase=="init" || this.phase=="postInit" ) &&
-      this.options.persist && this.persistence.cookiesFound;
   },
   isUserEvent: function() {
     return ( this.phase=="userEvent" );
@@ -3251,9 +3085,6 @@ $.ui.dynatree.getNode = function(el) {
 */
 };
 
-/**Return persistence information from cookies.*/
-$.ui.dynatree.getPersistData = DynaTreeStatus._getTreePersistData;
-
 /*******************************************************************************
  * Plugin default options:
  */
@@ -3267,7 +3098,6 @@ $.ui.dynatree.prototype.options = {
   initAjax: null, // Ajax options used to initialize the tree strucuture.
   autoFocus: true, // Set focus to first child, when expanding or lazy-loading.
   keyboard: true, // Support keyboard navigation.
-  persist: false, // Persist expand-status to a cookie
   autoCollapse: false, // Automatically collapse all siblings, when a
                        // node is expanded.
   clickFolderMode: 3, // 1:activate, 2:expand, 3:activate and expand
