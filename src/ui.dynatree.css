@@ -65,8 +65,6 @@ span.dynatree-vline,
 span.dynatree-connector,
 span.dynatree-expander,
 span.dynatree-icon,
-span.dynatree-checkbox,
-span.dynatree-radio,
 span.dynatree-drag-helper-img,
 #dynatree-drop-marker
 {
@@ -165,70 +163,6 @@ span.dynatree-expander:hover
 
 
 /*******************************************************************************
- * Checkbox icon
- */
-span.dynatree-checkbox
-{
-	margin-left: 3px;
-	background-position: 0px -32px;
-}
-span.dynatree-checkbox:hover
-{
-	background-position: -16px -32px;
-}
-
-.dynatree-partsel span.dynatree-checkbox
-{
-	background-position: -64px -32px;
-}
-.dynatree-partsel span.dynatree-checkbox:hover
-{
-	background-position: -80px -32px;
-}
-
-.dynatree-selected span.dynatree-checkbox
-{
-	background-position: -32px -32px;
-}
-.dynatree-selected span.dynatree-checkbox:hover
-{
-	background-position: -48px -32px;
-}
-
-/*******************************************************************************
- * Radiobutton icon
- * This is a customization, that may be activated by overriding the 'checkbox'
- * class name as 'dynatree-radio' in the tree options.
- */
-span.dynatree-radio
-{
-	margin-left: 3px;
-	background-position: 0px -48px;
-}
-span.dynatree-radio:hover
-{
-	background-position: -16px -48px;
-}
-
-.dynatree-partsel span.dynatree-radio
-{
-	background-position: -64px -48px;
-}
-.dynatree-partsel span.dynatree-radio:hover
-{
-	background-position: -80px -48px;
-}
-
-.dynatree-selected span.dynatree-radio
-{
-	background-position: -32px -48px;
-}
-.dynatree-selected span.dynatree-radio:hover
-{
-	background-position: -48px -48px;
-}
-
-/*******************************************************************************
  * Node type icon
  * Note: IE6 doesn't correctly evaluate multiples class names,
  *		 so we create combined class names that can be used in the CSS.
@@ -271,6 +205,29 @@ span.dynatree-icon /* Default icon */
 	background-position: 0px -112px;
 /*	background-image: url("ltError.gif");*/
 }
+
+
+/*******************************************************************************
+ * Document type icons
+ */
+
+span.dynatree-document,
+span.dynatree-data,
+span.dynatree-time-series {
+    width: 16px;
+    height: 16px;
+/*   display: -moz-inline-box; /* @ FF 1+2 removed for issue 221*/
+/*   -moz-box-align: start; /* issue 221 */
+    display: inline-block; /* Required to make a span sizeable */
+    vertical-align: top;
+    background-repeat: no-repeat;
+    background-position: left;
+    background-image: url("icons.gif");
+}
+
+span.dynatree-document    { background-position: 0px -176px; }
+span.dynatree-data        { background-position: 0px -192px; }
+span.dynatree-time-series { background-position: 0px -208px; }
 
 /*******************************************************************************
  * Node titles

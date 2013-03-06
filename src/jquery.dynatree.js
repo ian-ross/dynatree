@@ -134,9 +134,6 @@ DynaTreeNode.prototype = {
       // .. else (i.e. for root level) skip expander/connector altogether
     } else if (this.hasChildren() !== false) res += cache.tagExpander;
     else res += cache.tagConnector;
-    // Checkbox mode
-    if (opts.checkbox && data.hideCheckbox !== true && !data.isStatusNode)
-      res += cache.tagCheckbox;
     // folder or doctype icon
     if  (data.icon) {
       if (data.icon.charAt(0) === "/") imageSrc = data.icon;
@@ -479,7 +476,7 @@ DynaTreeNode.prototype = {
   },
 
   _getTypeForOuterNodeEvent: function(event) {
-    /** Return the inner node span (title, checkbox or expander) if
+    /** Return the inner node span (title or expander) if
      *  event.target points to the outer span.
      *  This function should fix issue #93:
      *  FF2 ignores empty spans, when generating events (returning the
@@ -505,7 +502,6 @@ DynaTreeNode.prototype = {
         // alert("HIT "+ cn.className);
         if (cn.className==cns.title) return "title";
         else if (cn.className==cns.expander) return "expander";
-        else if (cn.className==cns.checkbox) return "checkbox";
         else if (cn.className==cns.nodeIcon) return "icon";
       }
     }
@@ -520,7 +516,6 @@ DynaTreeNode.prototype = {
 
     if (tcn === cns.title) return "title";
     else if (tcn === cns.expander) return "expander";
-    else if (tcn === cns.checkbox) return "checkbox";
     else if (tcn === cns.nodeIcon) return "icon";
     else if (tcn === cns.empty || tcn === cns.vline || tcn === cns.connector)
       return "prefix";
@@ -876,10 +871,6 @@ DynaTreeNode.prototype = {
     if (targetType === "expander") {
       // Clicking the expander icon always expands/collapses
       this.toggleExpand();
-      this.focus(); // issue 95
-    } else if (targetType === "checkbox") {
-      // Clicking the checkbox always (de)selects
-      this.toggleSelect();
       this.focus(); // issue 95
     } else {
       this._userActivate();
@@ -1632,7 +1623,6 @@ DynaTree.prototype = {
       tagExpander: "<span class='" + opts.classNames.expander + "'></span>",
       tagConnector: "<span class='" + opts.classNames.connector + "'></span>",
       tagNodeIcon: "<span class='" + opts.classNames.nodeIcon + "'></span>",
-      tagCheckbox: "<span class='" + opts.classNames.checkbox + "'></span>",
       lastentry: undefined
     };
 
@@ -2529,7 +2519,6 @@ $.ui.dynatree.prototype.options = {
                        // node is expanded.
   clickFolderMode: 3, // 1:activate, 2:expand, 3:activate and expand
   activeVisible: true, // Make sure, active nodes are visible (expanded).
-  checkbox: false, // Show checkboxes.
   selectMode: 2, // 1:single, 2:multi, 3:multi-hier
   fx: null, // Animations, e.g. null or { height: "toggle", duration: 200 }
   noLink: false, // Use <span> instead of <a> tags for all nodes
@@ -2610,7 +2599,6 @@ $.ui.dynatree.prototype.options = {
     vline: "dynatree-vline",
     expander: "dynatree-expander",
     connector: "dynatree-connector",
-    checkbox: "dynatree-checkbox",
     nodeIcon: "dynatree-icon",
     title: "dynatree-title",
     noConnector: "dynatree-no-connector",
@@ -2659,7 +2647,6 @@ $.ui.dynatree.nodedatadefaults = {
   focus: false, // Initial focused status.
   expand: false, // Initial expanded status.
   select: false, // Initial selected status.
-  hideCheckbox: false, // Suppress checkbox display for this node.
   unselectable: false, // Prevent selection.
 //  disabled: false,
   // The following attributes are only valid if passed to some functions:
