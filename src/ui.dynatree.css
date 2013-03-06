@@ -1,26 +1,18 @@
 /*******************************************************************************
  * Tree container
  */
-ul.dynatree-container
+div.dynatree-container
 {
 	font-family: tahoma, arial, helvetica;
 	font-size: 10pt; /* font size should not be too big */
 	white-space: nowrap;
-	padding: 3px;
 	margin: 0; /* issue 201 */
 	background-color: white;
-	border: 1px dotted gray;
-	overflow: auto;
+	overflow: hidden;
 	height: 100%; /* issue 263 */
 }
 
-ul.dynatree-container ul
-{
-	padding: 0 0 0 16px;
-	margin: 0;
-}
-
-ul.dynatree-container li
+div.dynatree-container div.dynatree-item
 {
 	list-style-image: none;
 	list-style-position: outside;
@@ -38,18 +30,13 @@ ul.dynatree-container li
 	padding:1px 0 0 0;
 }
 /* Suppress lines for last child node */
-ul.dynatree-container li.dynatree-lastsib
-{
-	background-image: none;
-}
-/* Suppress lines if level is fixed expanded (option minExpandLevel) */
-ul.dynatree-no-connector > li
+div.dynatree-container div.dynatree-lastsib
 {
 	background-image: none;
 }
 
 /* Style, when control is disabled */
-.ui-dynatree-disabled ul.dynatree-container
+.ui-dynatree-disabled div.dynatree-container
 {
 	opacity: 0.5;
 /*	filter: alpha(opacity=50); /* Yields a css warning */
@@ -81,7 +68,7 @@ span.dynatree-drag-helper-img,
 }
 
 /** Used by 'icon' node option: */
-ul.dynatree-container img
+div.dynatree-container img
 {
 	width: 16px;
 	height: 16px;
@@ -90,28 +77,16 @@ ul.dynatree-container img
 	border-style: none;
 }
 
+div.dynatree-row.dynatree-active { background-color: yellow; }
 
 /*******************************************************************************
  * Lines and connectors
  */
 
-/*
-span.dynatree-empty
-{
-}
-span.dynatree-vline
-{
-}
-*/
 span.dynatree-connector
 {
 	background-image: none;
 }
-/*
-.dynatree-lastsib span.dynatree-connector
-{
-}
-*/
 /*******************************************************************************
  * Expander icon
  * Note: IE6 doesn't correctly evaluate multiples class names,
@@ -244,7 +219,7 @@ span.dynatree-node
 
 
 /* Remove blue color and underline from title links */
-ul.dynatree-container a
+div.dynatree-container a
 /*, ul.dynatree-container a:visited*/
 {
 	color: black; /* inherit doesn't work on IE */
@@ -260,7 +235,7 @@ ul.dynatree-container a
 
 }
 
-ul.dynatree-container a:hover
+div.dynatree-container a:hover
 {
 /*	text-decoration: underline; */
 	background: #F2F7FD; /* light blue */
@@ -280,7 +255,7 @@ span.dynatree-folder a
 /*	font-weight: bold; */ /* custom */
 }
 
-ul.dynatree-container a:focus,
+div.dynatree-container a:focus,
 span.dynatree-focused a:link  /* @IE */
 {
 	background-color: #EFEBDE; /* gray */
