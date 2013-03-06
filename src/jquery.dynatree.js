@@ -111,10 +111,9 @@ DynaTreeNode.prototype = {
     if (!data.key) data.key = "_" + tree._nodeCount++;
     else data.key = "" + data.key; // issue 371
     this.data = $.extend({}, $.ui.dynatree.nodedatadefaults, data);
-    this.div = null;     // Not yet created.
-    // this.li = null; // not yet created
+    this.li = null; // not yet created
     this.span = null; // not yet created
-    // this.ul = null; // not yet created
+    this.ul = null; // not yet created
     this.childList = null; // no subnodes yet
     this._isLoading = false; // Lazy content is being loaded
     this.hasSubSel = false;
@@ -210,28 +209,27 @@ DynaTreeNode.prototype = {
     var opts = tree.options, cn = opts.classNames;
     var isLastSib = this.isLastSibling(), firstTime = false;
 
-//    if (!parent && !this.ul) {
-    if (!parent && !this.div) {
+    if( !parent && !this.ul ) {
       // Root node has only a <ul>
-      // this.li = this.span = null;
-      this.div = this.span = null;
-      // this.ul = document.createElement("ul");
-      // if (opts.minExpandLevel > 1)
-      //   this.ul.className = cn.container + " " + cn.noConnector;
-      // else
-      //   this.ul.className = cn.container;
-    } else if (parent) {
-      // // Create <li><span /> </li>
-      // Create <div><span /> </div>
-      if (!this.div) {
+      this.li = this.span = null;
+      this.ul = document.createElement("ul");
+      if( opts.minExpandLevel > 1 ){
+        this.ul.className = cn.container + " " + cn.noConnector;
+      }else{
+        this.ul.className = cn.container;
+      }
+    } else if( parent ) {
+      // Create <li><span /> </li>
+      if( ! this.li ) {
         firstTime = true;
-        this.div = document.createElement("div");
-        this.div.dtnode = this;
-        if (data.key && opts.generateIds)
-          this.div.id = opts.idPrefix + data.key;
+        this.li = document.createElement("li");
+        this.li.dtnode = this;
+        if( data.key && opts.generateIds ){
+          this.li.id = opts.idPrefix + data.key;
+        }
         this.span = document.createElement("span");
         this.span.className = cn.title;
-        this.div.appendChild(this.span);
+        this.li.appendChild(this.span);
 
         if (!parent.ul) {
           // This is the parent's first child: create UL tag
@@ -262,6 +260,17 @@ DynaTreeNode.prototype = {
       if (this.hasSubSel) cnList.push(cn.partsel);
       if (tree.activeNode === this) cnList.push(cn.active);
       if (data.addClass) cnList.push(data.addClass);
+      // IE6 doesn't correctly evaluate multiple class names,
+      // so we create combined class names that can be used in the CSS
+      cnList.push(cn.combinedExpanderPrefix
+          + (this.bExpanded ? "e" : "c")
+          + (data.isLazy && this.childList === null ? "d" : "")
+          + (isLastSib ? "l" : "")
+          );
+      cnList.push(cn.combinedIconPrefix
+          + (this.bExpanded ? "e" : "c")
+          + (data.isFolder ? "f" : "")
+          );
       this.span.className = cnList.join(" ");
 
       // TODO: we should not set this in the <span> tag also, if we set it here:
@@ -279,16 +288,19 @@ DynaTreeNode.prototype = {
       for(var i=0, l=this.childList.length; i<l; i++)
         this.childList[i].render(false, includeInvisible);
     }
+    // Make sure the tag order matches the child array
+    this._fixOrder();
+
     // Hide children, if node is collapsed
-    if (this.div) {
-      var isHidden = (this.div.style.display === "none");
+    if (this.ul) {
+      var isHidden = (this.ul.style.display === "none");
       var isExpanded = !!this.bExpanded;
 //      logMsg("isHidden:%s", isHidden);
       if (useEffects && opts.fx && (isHidden === isExpanded)) {
         var duration = opts.fx.duration || 200;
         $(this.ul).animate(opts.fx, duration);
       } else
-        this.div.style.display =  (this.bExpanded || !parent) ? "" : "none";
+        this.ul.style.display = (this.bExpanded || !parent) ? "" : "none";
     }
   },
   /** Return '/id1/id2/id3'. */
