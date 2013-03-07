@@ -154,16 +154,12 @@ DynaTreeNode.prototype = {
       var tooltip = data.tooltip ?
         ' title="' + data.tooltip.replace(/\"/g, '&quot;') + '"' : '',
         href = data.href || "#";
-      if (opts.noLink || data.noLink) {
-        nodeTitle = '<span style="display:inline-block;" class="' +
-          opts.classNames.title + '"' + tooltip + '>' + data.title + '</span>';
+      nodeTitle = '<span style="display:inline-block;" class="' +
+        opts.classNames.title + '"' + tooltip + '>' + data.title + '</span>';
 //        this.tree.logDebug("nodeTitle: " + nodeTitle);
-      } else {
-        nodeTitle = '<a href="' + href + '" class="' +
-          opts.classNames.title + '"' + tooltip + '>' + data.title + '</a>';
-      }
     }
     res += nodeTitle;
+    res += cache.tagMenu;
     return res;
   },
 
@@ -211,9 +207,9 @@ DynaTreeNode.prototype = {
       this.treeItem = this.treeRow = null;
       this.treeHier = document.createElement("div");
       if (opts.minExpandLevel > 1)
-        this.treeHier.className = cn.container + " " + cn.noConnector;
+        this.treeHier.className = cn.toplevel + " " + cn.noConnector;
       else
-        this.treeHier.className = cn.container;
+        this.treeHier.className = cn.toplevel;
     } else if (parent) {
       // Create <div class="tree-item"><div class="tree-row" /> </div>
       if (!this.treeItem) {
@@ -267,7 +263,7 @@ DynaTreeNode.prototype = {
           + (this.bExpanded ? "e" : "c")
           + (data.isFolder ? "f" : "")
           );
-      this.treeRow.className = cnList.join(" ") + " dynatree-row";
+      this.treeRow.className = cnList.join(" ");
       $(this.treeRow).css('padding-left', (this.getLevel() - 1) * 15 + 'px');
 
       // TODO: we should not set this in the <span> tag also, if we set it here:
@@ -505,6 +501,7 @@ DynaTreeNode.prototype = {
         // alert("HIT "+ cn.className);
         if (cn.className==cns.title) return "title";
         else if (cn.className==cns.expander) return "expander";
+        else if (cn.className==cns.menu) return "menu";
         else if (cn.className==cns.nodeIcon) return "icon";
       }
     }
@@ -519,6 +516,7 @@ DynaTreeNode.prototype = {
 
     if (tcn === cns.title) return "title";
     else if (tcn === cns.expander) return "expander";
+    else if (tcn === cns.menu) return "menu";
     else if (tcn === cns.nodeIcon) return "icon";
     else if (tcn === cns.empty || tcn === cns.vline || tcn === cns.connector)
       return "prefix";
@@ -875,14 +873,12 @@ DynaTreeNode.prototype = {
       // Clicking the expander icon always expands/collapses
       this.toggleExpand();
       this.focus(); // issue 95
+    } else if (targetType === "menu") {
+      // Deal with menu actions here...
+      console.log("Menu clicked: " + this.title);
     } else {
       this._userActivate();
-      var aTag = this.treeRow.getElementsByTagName("a");
-      if(aTag[0])
-        aTag[0].focus();
-      else
-        // 'noLink' option was set
-        return true;
+      return true;
     }
     // Make sure that clicks stop, otherwise <a href='#'> jumps to the top
     event.preventDefault();
@@ -1622,6 +1618,7 @@ DynaTree.prototype = {
       tagVline: "<span class='" + opts.classNames.vline + "'></span>",
       tagExpander: "<span class='" + opts.classNames.expander + "'></span>",
       tagConnector: "<span class='" + opts.classNames.connector + "'></span>",
+      tagMenu: "<span class='" + opts.classNames.menu + "'></span>",
       tagNodeIcon: "<span class='" + opts.classNames.nodeIcon + "'></span>",
       lastentry: undefined
     };
@@ -1963,7 +1960,6 @@ TODO: better?
         select: $li.hasClass("selected"),
         activate: $li.hasClass("active"),
         focus: $li.hasClass("focused"),
-        noLink: $li.hasClass("noLink")
       };
       if (href) {
         data.href = href;
@@ -2521,7 +2517,6 @@ $.ui.dynatree.prototype.options = {
   activeVisible: true, // Make sure, active nodes are visible (expanded).
   selectMode: 2, // 1:single, 2:multi, 3:multi-hier
   fx: null, // Animations, e.g. null or { height: "toggle", duration: 200 }
-  noLink: false, // Use <span> instead of <a> tags for all nodes
   // Low level event handlers: onEvent(dtnode, event): return false,
   // to stop default processing
   onClick: null, // null: generate focus, expand, activate, select events.
@@ -2590,6 +2585,7 @@ $.ui.dynatree.prototype.options = {
   // Note: if only single entries are passed for options.classNames, all other
   // values are still set to default.
   classNames: {
+    toplevel: "dynatree",
     container: "dynatree-container",
     node: "dynatree-node",
     folder: "dynatree-folder",
@@ -2599,6 +2595,7 @@ $.ui.dynatree.prototype.options = {
     vline: "dynatree-vline",
     expander: "dynatree-expander",
     connector: "dynatree-connector",
+    menu: "dynatree-menu",
     nodeIcon: "dynatree-icon",
     title: "dynatree-title",
     noConnector: "dynatree-no-connector",
@@ -2642,7 +2639,6 @@ $.ui.dynatree.nodedatadefaults = {
               // tree.options.imagePath). 'null' for default icon,
               // 'false' for no icon.
   addClass: null, // Class name added to the node's span tag.
-  noLink: false, // Use <span> instead of <a> tag for this node
   activate: false, // Initial active status.
   focus: false, // Initial focused status.
   expand: false, // Initial expanded status.

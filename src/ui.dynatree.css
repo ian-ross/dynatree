@@ -1,22 +1,24 @@
 /*******************************************************************************
  * Tree container
  */
-div.dynatree-container
+div.dynatree
 {
 	font-family: tahoma, arial, helvetica;
 	font-size: 10pt; /* font size should not be too big */
 	white-space: nowrap;
 	margin: 0; /* issue 201 */
 	background-color: white;
-	overflow: hidden;
+	overflow: auto;
 	height: 100%; /* issue 263 */
 }
 
-div.dynatree-container div.dynatree-item
+div.dynatree div.dynatree-container
 {
-	list-style-image: none;
-	list-style-position: outside;
-	list-style-type: none;
+    margin: 0;
+}
+
+div.dynatree div.dynatree-item
+{
 	-moz-background-clip:border;
 	-moz-background-inline-policy: continuous;
 	-moz-background-origin: padding;
@@ -30,7 +32,7 @@ div.dynatree-container div.dynatree-item
 	padding:1px 0 0 0;
 }
 /* Suppress lines for last child node */
-div.dynatree-container div.dynatree-lastsib
+div.dynatree div.dynatree-lastsib
 {
 	background-image: none;
 }
@@ -77,7 +79,21 @@ div.dynatree-container img
 	border-style: none;
 }
 
-div.dynatree-row.dynatree-active { background-color: yellow; }
+div.dynatree-node.dynatree-active { background-color: #F0F0F0; }
+div.dynatree-node.dynatree-active span { background-color: #F0F0F0; }
+span.dynatree-menu {
+    width: 16px;
+    height: 20px;
+    display: inline-block;
+    background-repeat: no-repeat;
+    background-position: left;
+    vertical-align: middle;
+    padding-left: 10px;
+}
+div.dynatree-node.dynatree-active span.dynatree-menu {
+    background-image: url("icons.gif");
+    background-position: -64px -177px;
+}
 
 /*******************************************************************************
  * Lines and connectors
@@ -137,6 +153,8 @@ span.dynatree-expander:hover
 }
 
 
+span.dynatree-title { margin-left: 3px; }
+
 /*******************************************************************************
  * Node type icon
  * Note: IE6 doesn't correctly evaluate multiples class names,
@@ -149,7 +167,6 @@ span.dynatree-expander:hover
 
 span.dynatree-icon /* Default icon */
 {
-	margin-left: 3px;
 	background-position: 0px 0px;
 }
 
@@ -208,79 +225,33 @@ span.dynatree-time-series { background-position: 0px -208px; }
  * Node titles
  */
 
-/* @Chrome: otherwise hit area of node titles is broken (issue 133)
-   Removed again for issue 165; (133 couldn't be reproduced) */
-span.dynatree-node
-{
-/*	display: -moz-inline-box; /* issue 133, 165, 172, 192. removed for issue 221 */
-/*	-moz-box-align: start; /* issue 221 */
-/*  display: inline-block; /* Required to make a span sizeable */
-}
-
+span.dynatree-node { }
 
 /* Remove blue color and underline from title links */
-div.dynatree-container a
-/*, ul.dynatree-container a:visited*/
-{
-	color: black; /* inherit doesn't work on IE */
-	text-decoration: none;
-	vertical-align: top;
-	margin: 0px;
-	margin-left: 3px;
-/*	outline: 0; /* @ Firefox, prevent dotted border after click */
-	/* Set transparent border to prevent jumping when active node gets a border
-	   (we can do this, because this theme doesn't use vertical lines)
-	   */
-	border: 1px solid white; /* Note: 'transparent' would not work in IE6 */
-
+div.dynatree-container a {
+    color: black; /* inherit doesn't work on IE */
+    text-decoration: none;
+    vertical-align: top;
+    margin: 0px;
+    margin-left: 3px;
+    border: 1px solid white; /* Note: 'transparent' would not work in IE6 */
 }
 
-div.dynatree-container a:hover
-{
-/*	text-decoration: underline; */
-	background: #F2F7FD; /* light blue */
-	border-color: #B8D6FB; /* darker light blue */
+div.dynatree-container a:hover {
+    background: #F2F7FD; /* light blue */
+    border-color: #B8D6FB; /* darker light blue */
 }
 
-span.dynatree-node a
-{
-	display: inline-block; /* Better alignment, when title contains <br> */
-/*	vertical-align: top;*/
-	padding-left: 3px;
-	padding-right: 3px; /* Otherwise italic font will be outside bounds */
-	/*	line-height: 16px; /* should be the same as img height, in case 16 px */
+span.dynatree-node a {
+    display: inline-block; /* Better alignment, when title contains <br> */
+    padding-left: 3px;
+    padding-right: 3px; /* Otherwise italic font will be outside bounds */
 }
-span.dynatree-folder a
-{
-/*	font-weight: bold; */ /* custom */
-}
-
 div.dynatree-container a:focus,
-span.dynatree-focused a:link  /* @IE */
-{
-	background-color: #EFEBDE; /* gray */
-}
+span.dynatree-focused a:link  /* @IE */ { background-color: #EFEBDE; }
 
-span.dynatree-has-children a
-{
-/*	font-style: oblique; /* custom: */
-}
+span.dynatree-selected a { font-style: italic; }
 
-span.dynatree-expanded a
-{
-}
-
-span.dynatree-selected a
-{
-/*	color: green; */
-	font-style: italic;
-}
-
-span.dynatree-active a
-{
-	border: 1px solid #99DEFD;
-	background-color: #D8F0FA;
-}
 
 /*******************************************************************************
  * Drag'n'drop support
